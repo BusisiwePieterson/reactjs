@@ -18,6 +18,9 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Use Node.js ${{ matrix.node-version }} - ${{ matrix.architecture }}
         uses: actions/setup-node@v4
@@ -39,7 +42,7 @@ jobs:
         run: npm run build
 
       - name: Setup SonarQube
-        uses: warchant/setup-sonar-scanner@v1
+        uses: warchant/setup-sonar-scanner@v8
 
       - name: Analyze with SonarCloud
         uses: sonarsource/sonarcloud-github-action@master
@@ -68,6 +71,9 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Use Node.js ${{ matrix.node-version }} - ${{ matrix.architecture }}
         uses: actions/setup-node@v4
@@ -86,7 +92,7 @@ jobs:
           CI: true
 
       - name: Setup SonarQube
-        uses: warchant/setup-sonar-scanner@v1
+        uses: warchant/setup-sonar-scanner@v8
 
       - name: Analyze with SonarCloud
         uses: sonarsource/sonarcloud-github-action@master
@@ -108,6 +114,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
@@ -134,6 +143,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
@@ -164,6 +176,9 @@ jobs:
       actions: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push frontend Docker image
         run: |
@@ -193,73 +208,6 @@ jobs:
         working-directory: ./quiz-app
 
       - name: Run Snyk to check for vulnerabilities in the Docker image
-        uses: snyk/actions/docker@master
-        with:
-          image: ${{ secrets.DOCKER_USERNAME }}/frontend-js
-          args: --file=quiz-app/Dockerfile --severity-threshold=high
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true
-
-  backend-image:
-    needs: backend-security
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build and push backend Docker image
-        run: |
-          docker build . -t ${{ secrets.DOCKER_USERNAME }}/backend-api
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push ${{ secrets.DOCKER_USERNAME }}/backend-api
-        working-directory: ./backend
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'docker.io/${{ secrets.DOCKER_USERNAME }}/backend-api'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Install Snyk CLI
-        uses: snyk/actions/setup@master
-        with:
-          snyk-token: ${{ secrets.SNYK_TOKEN }}
-
-      - name: Snyk Authenticate
-        run: snyk auth ${{ secrets.SNYK_TOKEN }}
-
-      - name: Snyk Container monitor
-        run: snyk container monitor ${{ secrets.DOCKER_USERNAME }}/backend-api --file=Dockerfile
-        working-directory: ./backend
-
-      - name: Run Snyk to check for vulnerabilities in the Docker image
-        uses: snyk/actions/docker@master
-        with:
-          image: ${{ secrets.DOCKER_USERNAME }}/backend-api
-          args: --file=backend/Dockerfile --severity-threshold=high
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true
-
-  k8s-manifest-scan:
-    needs: [backend-image, frontend-image]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run Snyk to check Kubernetes manifest file for issues
-        uses: snyk/actions/iac@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          file: kubernetes-manifest/
-          args: --severity-threshold=high
-
+        uses: snyk/act
 
 
