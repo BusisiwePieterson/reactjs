@@ -19,7 +19,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
-          repository: 'USERNAME/REPOSITORY'
+          repository: ${{ github.repository }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Use Node.js ${{ matrix.node-version }} - ${{ matrix.architecture }}
@@ -47,7 +47,7 @@ jobs:
       - name: Analyze with SonarCloud
         uses: sonarsource/sonarcloud-github-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           projectBaseDir: quiz-app
@@ -72,7 +72,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
-          repository: 'USERNAME/REPOSITORY'
+          repository: ${{ github.repository }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Use Node.js ${{ matrix.node-version }} - ${{ matrix.architecture }}
@@ -115,7 +115,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: 'USERNAME/REPOSITORY'
+          repository: ${{ github.repository }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Snyk to check for vulnerabilities
@@ -144,8 +144,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: 'USERNAME/REPOSITORY'
-          token: ${{ secrets._GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
@@ -177,7 +177,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: 'USERNAME/REPOSITORY'
+          repository: ${{ github.repository }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push frontend Docker image
@@ -208,28 +208,6 @@ jobs:
         working-directory: ./quiz-app
 
       - name: Run Snyk to check for vulnerabilities in the Docker image
-        uses: snyk/actions/docker@master
-        with:
-          image: ${{ secrets.DOCKER_USERNAME }}/frontend-js
-          args: --file=quiz-app/Dockerfile --severity-threshold=high
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true
+        uses: snyk/act
 
-  backend-image:
-    needs: backend-security
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: 'USERNAME/REPOSITORY'
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push backend Docker image
-        run: |
-          docker build . -t ${{ secrets.DOCKER_USERNAME }}/backend-api
 
